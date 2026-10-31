@@ -1,0 +1,25 @@
+name: Label Gate Repro
+
+# Mirrors the gate used by kubernetes/minikube .github/workflows/functional_extra.yml:
+# pull_request_target restricted to [labeled], with the job gated on the PRESENCE of a label,
+# and a checkout of github.event.pull_request.head.sha.
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  gated:
+    if: contains(github.event.pull_request.labels.*.name, 'ok-to-extra-test')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Report which commit content reached the runner
+        run: |
+          echo "label_that_fired   = ${{ github.event.label.name }}"
+          echo "payload_head_sha   = ${{ github.event.pull_request.head.sha }}"
+          echo "checked_out_sha    = $(git rev-parse HEAD)"
+          echo "labels_on_pr       = ${{ join(github.event.pull_request.labels.*.name, ',') }}"
+          echo "--- MARKER.txt from the checked-out tree:"
+          cat MARKER.txt
